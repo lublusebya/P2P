@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>P2P — мессенджер</title>
+<style>
+:root{--bg:#000;--fg:#fff;--mut:rgba(255,255,255,.55);--gl:rgba(255,255,255,.07);--ln:rgba(255,255,255,.15);--bl:rgba(255,255,255,.2);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#fff;--fg:#000;--mut:rgba(0,0,0,.55);--gl:rgba(0,0,0,.05);--ln:rgba(0,0,0,.14);--bl:rgba(0,0,0,.16);color-scheme:light}}
+:root[data-theme=light]{--bg:#fff;--fg:#000;--mut:rgba(0,0,0,.55);--gl:rgba(0,0,0,.05);--ln:rgba(0,0,0,.14);--bl:rgba(0,0,0,.16);color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;transition:background .6s,color .6s}
+.bg{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+.bg i{position:absolute;border-radius:50%;background:var(--bl);filter:blur(80px);animation:fl 20s ease-in-out infinite alternate}
+.bg i:nth-child(1){width:60vmax;height:60vmax;left:-20vmax;top:-20vmax}
+.bg i:nth-child(2){width:50vmax;height:50vmax;right:-15vmax;bottom:-15vmax;animation-duration:26s;animation-delay:-8s}
+.bg i:nth-child(3){width:28vmax;height:28vmax;left:40%;top:38%;animation-duration:15s;animation-delay:-4s;opacity:.6}
+@keyframes fl{to{transform:translate(12vmax,8vmax) scale(1.25) rotate(40deg)}}
+main{position:relative;height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
+.v{display:none;width:100%;max-width:460px;max-height:100%;overflow:auto;flex-direction:column;gap:12px}
+.v.on{display:flex;animation:in .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes in{from{opacity:0;filter:blur(16px);transform:translateY(24px) scale(.96)}}
+.g{background:var(--gl);border:1px solid var(--ln);border-radius:28px;-webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5)}
+.card{position:relative;padding:26px}
+h1{margin:0;font-size:60px;line-height:1.1;letter-spacing:.16em;font-weight:800;background:linear-gradient(90deg,var(--mut),var(--fg),var(--mut));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 5s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+h2{margin:8px 0 0;font-size:15px;font-weight:600}
+p{margin:0;color:var(--mut);font-size:14px}
+input,textarea{width:100%;border:1px solid var(--ln);background:var(--gl);color:var(--fg);border-radius:16px;padding:13px 15px;font:inherit;outline:none;transition:border-color .3s,box-shadow .3s}
+input:focus,textarea:focus{border-color:var(--fg);box-shadow:0 0 0 4px var(--gl)}
+textarea{height:86px;resize:none;font:12px/1.35 ui-monospace,Menlo,monospace;word-break:break-all}
+.b{border:1px solid var(--ln);background:var(--gl);color:var(--fg);border-radius:16px;padding:13px 18px;font:inherit;font-weight:600;cursor:pointer;transition:transform .25s,background .3s,color .3s}
+.b.p{background:var(--fg);color:var(--bg)}
+.b:active{transform:scale(.95)}
+.b:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+@media(hover:hover){.b:hover{transform:translateY(-2px);background:var(--fg);color:var(--bg)}}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.tg{position:absolute;top:16px;right:16px;width:38px;height:38px;padding:0;border-radius:50%}
+#chat{height:100%;max-width:560px;gap:10px;overflow:visible}
+.hd{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.hd .tg{position:static;flex:none}
+.hd div{flex:1;min-width:0}.hd b{display:block}.hd small{color:var(--mut)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--fg);animation:pl 2s infinite}
+.off .dot{animation:none;opacity:.3}
+@keyframes pl{0%{box-shadow:0 0 0 0 var(--mut)}70%,100%{box-shadow:0 0 0 12px transparent}}
+#log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px;scrollbar-width:none}
+.m{max-width:80%;padding:10px 14px;border-radius:20px;white-space:pre-wrap;word-break:break-word;animation:pop .6s cubic-bezier(.2,.9,.3,1.15) both}
+.m time{display:block;font-size:10px;opacity:.5;margin-top:2px;text-align:right}
+.m.me{align-self:flex-end;background:var(--fg);color:var(--bg);border-bottom-right-radius:6px;transform-origin:right bottom}
+.m.th{align-self:flex-start;background:var(--gl);border:1px solid var(--ln);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom-left-radius:6px;transform-origin:left bottom}
+.m.sy{align-self:center;color:var(--mut);font-size:12px;padding:4px;text-align:center}
+@keyframes pop{from{opacity:0;filter:blur(10px);transform:translateY(16px) scale(.85)}}
+#ty{height:18px;display:flex;gap:4px;padding-left:16px;opacity:0;transition:opacity .3s}
+#ty.on{opacity:1}
+#ty s{width:6px;height:6px;border-radius:50%;background:var(--mut);animation:bn 1s infinite}
+#ty s:nth-child(2){animation-delay:.15s}#ty s:nth-child(3){animation-delay:.3s}
+@keyframes bn{50%{transform:translateY(-5px);background:var(--fg)}}
+.bar{display:flex;gap:8px;padding:8px}
+.bar input{border:0;background:none;box-shadow:none}
+.bar .b{border-radius:20px;width:50px;padding:0}
+#ts{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;z-index:9;padding:10px 18px;border-radius:99px;font-size:14px;background:var(--bg);transform:translate(-50%,-120px);transition:transform .5s cubic-bezier(.2,.9,.3,1.2)}
+#ts.on{transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.code{font:700 40px/1 ui-monospace,Menlo,monospace;letter-spacing:.3em;text-align:center;padding:22px 0 22px .3em;border:1px solid var(--ln);border-radius:22px;background:var(--gl);cursor:pointer;user-select:all;animation:gw 3s ease-in-out infinite alternate}
+@keyframes gw{to{box-shadow:0 0 40px var(--bl);border-color:var(--fg)}}
+#ci{text-align:center;font:700 28px ui-monospace,Menlo,monospace;letter-spacing:.25em;text-transform:uppercase}
+.st{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--mut);font-size:14px;min-height:20px;text-align:center}
+.dots{display:none;gap:5px}.w .dots{display:flex}
+.dots s{width:7px;height:7px;border-radius:50%;background:var(--mut);animation:bn 1s infinite}
+.dots s:nth-child(2){animation-delay:.15s}.dots s:nth-child(3){animation-delay:.3s}
+details{border-top:1px solid var(--ln);padding-top:10px;color:var(--mut);font-size:14px}summary{cursor:pointer}
+.col{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.mdl{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.mdl.on{display:flex;animation:fd .4s both}
+.mdl .card{max-width:380px;width:100%;background:var(--bg);display:flex;flex-direction:column;gap:14px;animation:in .55s cubic-bezier(.2,.9,.3,1.1) both}
+.mdl h2{font-size:20px;margin:0}
+@keyframes fd{from{opacity:0}}
+</style>
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i></div>
+<div id="ts" class="g"></div>
+<div id="md" class="mdl"><div class="g card"><h2 id="mt"></h2><p>Вы точно хотите открыть с этим человеком чат?</p><div class="row"><button class="b" id="mn">Отклонить</button><button class="b p" id="my">Принять</button></div></div></div>
+<main>
+<section id="lobby" class="v g card on">
+<button class="b tg" title="Тема">◐</button>
+<h1>P2P</h1>
+<p>Прямой зашифрованный чат между двумя устройствами. Один приглашает и получает код, второй входит по этому коду.</p>
+<input id="nm" placeholder="Твоё имя" maxlength="20" autocomplete="off">
+<div class="row"><button class="b p" id="bh">Пригласить</button><button class="b" id="bj">Войти</button></div>
+</section>
+
+<section id="host" class="v g card">
+<h2>Отправь этот код другу</h2>
+<div class="code" id="code">······</div>
+<button class="b" data-c="#code">Скопировать код</button>
+<div class="st w"><span class="dots"><s></s><s></s><s></s></span><span id="ht">Готовим приглашение</span></div>
+<details id="mh"><summary>Друг без аккаунта Claude? Обмен кодами вручную</summary><div class="col">
+<textarea id="o" readonly spellcheck="false"></textarea><button class="b" data-c="#o">Скопировать длинный код</button>
+<textarea id="ai" spellcheck="false" placeholder="Ответный код друга"></textarea><button class="b" id="ba">Соединить</button></div></details>
+<button class="b" onclick="location.reload()">Назад</button>
+</section>
+
+<section id="join" class="v g card">
+<h2>Введи код, который прислал друг</h2>
+<input id="ci" maxlength="8" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<button class="b p" id="bo">Присоединиться</button>
+<div class="st"><span class="dots"><s></s><s></s><s></s></span><span id="jt">Ждём ввода кода</span></div>
+<details id="mj"><summary>Нет доступа? Обмен кодами вручную</summary><div class="col">
+<textarea id="oi" spellcheck="false" placeholder="Длинный код друга"></textarea><button class="b" id="bm">Принять код</button>
+<textarea id="a" readonly spellcheck="false"></textarea><button class="b" data-c="#a">Скопировать ответ</button></div></details>
+<button class="b" onclick="location.reload()">Назад</button>
+</section>
+
+<section id="chat" class="v">
+<div class="hd g"><span class="dot"></span><div><b id="pn">Собеседник</b><small id="st">в сети</small></div><button class="b tg" title="Тема">◐</button></div>
+<div id="log"></div>
+<div id="ty"><s></s><s></s><s></s></div>
+<div class="bar g"><input id="in" placeholder="Сообщение" autocomplete="off" enterkeyhint="send"><button class="b p" id="sd">➤</button></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s),A='abcdefghjkmnpqrstuvwxyz23456789',
+cfg={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}]},
+getR=()=>window.claude&&claude.use?claude.use('room').catch(()=>null):Promise.resolve(null);
+let pc,dc,room,dead=0,tyT,lastTy=0,busy=0;const q=[],res={},seen={};
+const show=id=>document.querySelectorAll('.v').forEach(v=>v.classList.toggle('on',v.id===id));
+const toast=t=>{const e=$('#ts');e.textContent=t;e.classList.add('on');clearTimeout(e.t);e.t=setTimeout(()=>e.classList.remove('on'),2400)};
+const stat=(id,t,w)=>{$(id).textContent=t;$(id).parentNode.classList.toggle('w',!!w)};
+const myName=()=>$('#nm').value.trim().slice(0,20)||'Аноним';
+const enc=d=>btoa(JSON.stringify(d)),dec=s=>JSON.parse(atob(s.replace(/\s/g,'')));
+const gather=()=>new Promise(r=>{const f=()=>pc.iceGatheringState==='complete'&&r();pc.onicegatheringstatechange=f;f();setTimeout(r,5000)});
+function mk(){if(pc)return;pc=new RTCPeerConnection(cfg);pc.onconnectionstatechange=()=>pc.connectionState==='failed'&&lost();pc.ondatachannel=e=>chan(e.channel)}
+function put(d){const l=$('#log');l.append(d);l.scrollTo({top:l.scrollHeight,behavior:'smooth'})}
+function sys(x){const d=document.createElement('div');d.className='m sy';d.textContent=x;put(d)}
+function add(x,mine,ts=Date.now()){const d=document.createElement('div'),t=document.createElement('time');d.className='m '+(mine?'me':'th');t.textContent=new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});d.append(x,t);put(d)}
+function chan(c){dc=c;
+c.onopen=()=>{c.send(JSON.stringify({t:'hi',n:myName()}));$('#md').classList.remove('on');show('chat');sys('Соединение установлено, канал зашифрован');if(room)room.leave().catch(()=>{})};
+c.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch{return}
+if(d.t==='hi')$('#pn').textContent=String(d.n).slice(0,20);
+else if(d.t==='ty'){const y=$('#ty');y.classList.add('on');clearTimeout(tyT);tyT=setTimeout(()=>y.classList.remove('on'),2000)}
+else if(d.t==='m'){$('#ty').classList.remove('on');add(String(d.x).slice(0,4000),0,d.ts)}};
+c.onclose=lost}
+function lost(){if(!$('#chat').classList.contains('on'))return toast('Не удалось соединиться. Начните заново');
+if(dead)return;dead=1;$('#chat').classList.add('off');$('#st').textContent='не в сети';sys('Соединение разорвано');
+$('#in').disabled=true;$('#sd').textContent='↻';$('#sd').onclick=()=>location.reload()}
+function send(){const i=$('#in'),x=i.value.trim();if(!x||!dc||dc.readyState!=='open')return;dc.send(JSON.stringify({t:'m',x,ts:Date.now()}));add(x,1);i.value=''}
+$('#sd').onclick=send;
+$('#in').onkeydown=e=>e.key==='Enter'&&send();
+$('#in').oninput=()=>{if(Date.now()-lastTy>1500&&dc&&dc.readyState==='open'){lastTy=Date.now();dc.send('{"t":"ty"}')}};
+
+function ask(){if(busy||!q.length)return;busy=1;const p=q.shift();
+$('#mt').textContent=String(p.presence.n||'Кто-то').slice(0,20)+' хочет присоединиться';
+$('#md').classList.add('on');try{navigator.vibrate(80)}catch{}
+const done=async ok=>{$('#md').classList.remove('on');busy=ok?1:0;res[p.peer]=ok?1:0;room.presence({res}).catch(()=>{});
+if(ok){q.length=0;try{await pc.setRemoteDescription(dec(p.presence.a));stat('#ht','Соединяем…',1)}catch{toast('Не удалось соединиться')}}
+ask()};
+$('#my').onclick=()=>done(1);$('#mn').onclick=()=>done(0)}
+
+const manualHost=()=>{$('#mh').open=true;stat('#ht','Автосоединение недоступно. Используй обмен вручную',0)};
+$('#bh').onclick=async()=>{
+show('host');
+const code=Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>A[b%A.length]).join('');
+$('#code').textContent=code.toUpperCase();
+mk();chan(pc.createDataChannel('c'));
+await pc.setLocalDescription(await pc.createOffer());await gather();
+const offer=enc(pc.localDescription);$('#o').value=offer;
+const R=await getR();if(!R)return manualHost();
+try{room=await R.join('p2p-'+code);
+await room.presence({r:'h',n:myName(),o:offer});
+stat('#ht','Ждём друга',1);
+room.onPeers(c=>c.peers.forEach(p=>{const d=p.presence;
+if(p.isMe||d.r!=='g'||!d.a||seen[p.peer]===d.a)return;
+seen[p.peer]=d.a;q.push(p);ask()}))}catch{manualHost()}};
+
+$('#bj').onclick=()=>show('join');
+$('#bo').onclick=async()=>{
+const code=$('#ci').value.toLowerCase().replace(/[^a-z0-9]/g,'');
+if(code.length<6)return toast('Введи код из 6 символов');
+stat('#jt','Подключаемся…',1);
+const R=await getR();
+if(!R){stat('#jt','Автосоединение недоступно. Используй обмен вручную',0);$('#mj').open=true;return}
+mk();let sent=0;
+try{room=await R.join('p2p-'+code)}catch{return stat('#jt','Не удалось подключиться',0)}
+stat('#jt','Ищем друга…',1);
+setTimeout(()=>{if(!sent)stat('#jt','Друг с таким кодом не найден. Проверь код',0)},12000);
+room.onPeers(async c=>{
+const h=c.peers.find(p=>!p.isMe&&p.presence.r==='h'&&p.presence.o);if(!h)return;
+if(!sent){sent=1;try{await pc.setRemoteDescription(dec(h.presence.o));await pc.setLocalDescription(await pc.createAnswer());await gather();
+await room.presence({r:'g',n:myName(),a:enc(pc.localDescription)});stat('#jt','Ждём, пока друг примет',1)}catch{sent=0;toast('Код не подошёл')}}
+const m=c.peers.find(p=>p.isMe&&p.sameTab),v=m&&h.presence.res&&h.presence.res[m.peer];
+if(v===0){stat('#jt','Друг отклонил приглашение',0);toast('Приглашение отклонено')}})};
+
+$('#ba').onclick=async()=>{try{await pc.setRemoteDescription(dec($('#ai').value));toast('Соединяем…')}catch{toast('Неверный код')}};
+$('#bm').onclick=async()=>{try{mk();$('#a').value='Генерирую ответ…';await pc.setRemoteDescription(dec($('#oi').value));
+await pc.setLocalDescription(await pc.createAnswer());await gather();$('#a').value=enc(pc.localDescription)}catch{$('#a').value='';toast('Неверный код')}};
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=async()=>{const t=$(b.dataset.c),v=t.value??t.textContent;if(!v||/^(Генерирую|·)/.test(v))return;
+if(t.select)t.select();else{const r=document.createRange();r.selectNodeContents(t);const s=getSelection();s.removeAllRanges();s.addRange(r)}
+try{await navigator.clipboard.writeText(v)}catch{document.execCommand('copy')}toast('Скопировано')});
+$('#code').onclick=()=>$('[data-c="#code"]').click();
+document.querySelectorAll('.tg').forEach(b=>b.onclick=()=>{const r=document.documentElement,
+dark=r.dataset.theme?r.dataset.theme==='dark':!matchMedia('(prefers-color-scheme:light)').matches;r.dataset.theme=dark?'light':'dark'});
+</script>
+</body>
+</html>
