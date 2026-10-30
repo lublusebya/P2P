@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>P2P — мессенджер</title>
+<style>
+:root{--bg:#000;--fg:#fff;--mut:rgba(255,255,255,.55);--gl:rgba(255,255,255,.07);--ln:rgba(255,255,255,.15);--bl:rgba(255,255,255,.2);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#fff;--fg:#000;--mut:rgba(0,0,0,.55);--gl:rgba(0,0,0,.05);--ln:rgba(0,0,0,.14);--bl:rgba(0,0,0,.16);color-scheme:light}}
+:root[data-theme=light]{--bg:#fff;--fg:#000;--mut:rgba(0,0,0,.55);--gl:rgba(0,0,0,.05);--ln:rgba(0,0,0,.14);--bl:rgba(0,0,0,.16);color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;transition:background .6s,color .6s}
+.bg{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+.bg i{position:absolute;border-radius:50%;background:var(--bl);filter:blur(80px);animation:fl 20s ease-in-out infinite alternate}
+.bg i:nth-child(1){width:60vmax;height:60vmax;left:-20vmax;top:-20vmax}
+.bg i:nth-child(2){width:50vmax;height:50vmax;right:-15vmax;bottom:-15vmax;animation-duration:26s;animation-delay:-8s}
+.bg i:nth-child(3){width:28vmax;height:28vmax;left:40%;top:38%;animation-duration:15s;animation-delay:-4s;opacity:.6}
+@keyframes fl{to{transform:translate(12vmax,8vmax) scale(1.25) rotate(40deg)}}
+main{position:relative;height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
+.v{display:none;width:100%;max-width:460px;max-height:100%;overflow:auto;flex-direction:column;gap:12px}
+.v.on{display:flex;animation:in .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes in{from{opacity:0;filter:blur(16px);transform:translateY(24px) scale(.96)}}
+.g{background:var(--gl);border:1px solid var(--ln);border-radius:28px;-webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5)}
+.card{position:relative;padding:26px}
+h1{margin:0;font-size:60px;line-height:1.1;letter-spacing:.16em;font-weight:800;background:linear-gradient(90deg,var(--mut),var(--fg),var(--mut));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 5s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+h2{margin:8px 0 0;font-size:15px;font-weight:600}
+p{margin:0;color:var(--mut);font-size:14px}
+input,textarea{width:100%;border:1px solid var(--ln);background:var(--gl);color:var(--fg);border-radius:16px;padding:13px 15px;font:inherit;outline:none;transition:border-color .3s,box-shadow .3s}
+input:focus,textarea:focus{border-color:var(--fg);box-shadow:0 0 0 4px var(--gl)}
+textarea{height:86px;resize:none;font:12px/1.35 ui-monospace,Menlo,monospace;word-break:break-all}
+.b{border:1px solid var(--ln);background:var(--gl);color:var(--fg);border-radius:16px;padding:13px 18px;font:inherit;font-weight:600;cursor:pointer;transition:transform .25s,background .3s,color .3s}
+.b.p{background:var(--fg);color:var(--bg)}
+.b:active{transform:scale(.95)}
+.b:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+@media(hover:hover){.b:hover{transform:translateY(-2px);background:var(--fg);color:var(--bg)}}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.tg{position:absolute;top:16px;right:16px;width:38px;height:38px;padding:0;border-radius:50%}
+#chat{height:100%;max-width:560px;gap:10px;overflow:visible}
+.hd{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.hd .tg{position:static;flex:none}
+.hd div{flex:1;min-width:0}.hd b{display:block}.hd small{color:var(--mut)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--fg);animation:pl 2s infinite}
+.off .dot{animation:none;opacity:.3}
+@keyframes pl{0%{box-shadow:0 0 0 0 var(--mut)}70%,100%{box-shadow:0 0 0 12px transparent}}
+#log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px;scrollbar-width:none}
+.m{max-width:80%;padding:10px 14px;border-radius:20px;white-space:pre-wrap;word-break:break-word;animation:pop .6s cubic-bezier(.2,.9,.3,1.15) both}
+.m time{display:block;font-size:10px;opacity:.5;margin-top:2px;text-align:right}
+.m.me{align-self:flex-end;background:var(--fg);color:var(--bg);border-bottom-right-radius:6px;transform-origin:right bottom}
+.m.th{align-self:flex-start;background:var(--gl);border:1px solid var(--ln);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom-left-radius:6px;transform-origin:left bottom}
+.m.sy{align-self:center;color:var(--mut);font-size:12px;padding:4px;text-align:center}
+@keyframes pop{from{opacity:0;filter:blur(10px);transform:translateY(16px) scale(.85)}}
+#ty{height:18px;display:flex;gap:4px;padding-left:16px;opacity:0;transition:opacity .3s}
+#ty.on{opacity:1}
+#ty s{width:6px;height:6px;border-radius:50%;background:var(--mut);animation:bn 1s infinite}
+#ty s:nth-child(2){animation-delay:.15s}#ty s:nth-child(3){animation-delay:.3s}
+@keyframes bn{50%{transform:translateY(-5px);background:var(--fg)}}
+.bar{display:flex;gap:8px;padding:8px}
+.bar input{border:0;background:none;box-shadow:none}
+.bar .b{border-radius:20px;width:50px;padding:0}
+#ts{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;z-index:9;padding:10px 18px;border-radius:99px;font-size:14px;background:var(--bg);transform:translate(-50%,-120px);transition:transform .5s cubic-bezier(.2,.9,.3,1.2)}
+#ts.on{transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.code{font:700 40px/1 ui-monospace,Menlo,monospace;letter-spacing:.3em;text-align:center;padding:22px 0 22px .3em;border:1px solid var(--ln);border-radius:22px;background:var(--gl);cursor:pointer;user-select:all;animation:gw 3s ease-in-out infinite alternate}
+@keyframes gw{to{box-shadow:0 0 40px var(--bl);border-color:var(--fg)}}
+#ci{text-align:center;font:700 28px ui-monospace,Menlo,monospace;letter-spacing:.25em;text-transform:uppercase}
+.st{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--mut);font-size:14px;min-height:20px;text-align:center}
+.dots{display:none;gap:5px}.w .dots{display:flex}
+.dots s{width:7px;height:7px;border-radius:50%;background:var(--mut);animation:bn 1s infinite}
+.dots s:nth-child(2){animation-delay:.15s}.dots s:nth-child(3){animation-delay:.3s}
+details{border-top:1px solid var(--ln);padding-top:10px;color:var(--mut);font-size:14px}summary{cursor:pointer}
+.col{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.mdl{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.mdl.on{display:flex;animation:fd .4s both}
+.mdl .card{max-width:380px;width:100%;background:var(--bg);display:flex;flex-direction:column;gap:14px;animation:in .55s cubic-bezier(.2,.9,.3,1.1) both}
+.mdl h2{font-size:20px;margin:0}
+@keyframes fd{from{opacity:0}}
+
+svg{width:20px;height:20px;display:block}
+i[data-i]{display:grid;place-items:center}
+.b{display:grid;place-items:center}
+.big{font-size:22px}
+.pl{display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:50vh}
+.pc{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:20px;background:var(--gl);border:1px solid var(--ln);cursor:pointer;transition:transform .25s,background .3s,color .3s;animation:pop .6s cubic-bezier(.2,.9,.3,1.15) both}
+.pc:active{transform:scale(.97)}
+@media(hover:hover){.pc:hover{background:var(--fg);color:var(--bg);transform:translateX(4px)}.pc:hover .av{background:var(--bg);color:var(--fg)}}
+.pc.bz{opacity:.45;pointer-events:none}
+.pc div{flex:1;min-width:0}.pc b,.pc small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pc small{opacity:.6}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:18px;background:var(--fg);color:var(--bg);flex:none;transition:.3s}
+.em{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:10px 0}
+.radar{position:relative;width:120px;height:120px;margin:10px auto}
+.radar i{position:absolute;inset:0;border:1px solid var(--fg);border-radius:50%;opacity:0;animation:rd 3s linear infinite}
+.radar i:nth-child(2){animation-delay:1s}.radar i:nth-child(3){animation-delay:2s}
+@keyframes rd{from{transform:scale(.2);opacity:.6}to{transform:scale(1);opacity:0}}
+.hd .b{width:40px;height:40px;padding:0;border-radius:50%;flex:none}
+.bar{align-items:center}
+.bar .b{width:46px;height:46px;padding:0;border-radius:50%;flex:none}
+.m.im{padding:4px}.m.im img{display:block;max-width:100%;max-height:320px;border-radius:16px;cursor:zoom-in}.m.im time{padding:0 8px 4px}
+.vm{display:flex;align-items:center;gap:10px;min-width:210px}
+.vm .b{width:38px;height:38px;padding:0;border-radius:50%;flex:none;border:0}
+.me .vm .b{background:var(--bg);color:var(--fg)}.th .vm .b{background:var(--fg);color:var(--bg)}
+.vm small{font-size:11px;opacity:.6;font-variant-numeric:tabular-nums}
+.pg{flex:1;height:4px;border-radius:4px;background:color-mix(in srgb,currentColor 25%,transparent);overflow:hidden}
+.pg i{display:block;height:100%;width:0;background:currentColor}
+#rt{display:none;flex:1;align-items:center;gap:10px;padding:0 10px;font-variant-numeric:tabular-nums}
+#rt::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--fg);animation:pl 1s infinite}
+#cx{display:none}
+.rec #rt{display:flex}.rec #in,.rec #fb{display:none}.rec #cx{display:grid}
+#lb{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+#lb.on{display:flex;animation:fd .3s both}#lb img{max-width:94%;max-height:90%;border-radius:20px;animation:in .5s both}
+#cv{position:fixed;inset:0;z-index:7;display:none;background:var(--bg);overflow:hidden}
+#cv.on{display:block;animation:fd .5s both}
+#avt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#avt .radar{width:180px;height:180px}#avt .av{position:absolute;inset:50px;width:auto;height:auto;font-size:44px}
+#rv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#lv{position:absolute;right:16px;top:calc(env(safe-area-inset-top,0px) + 16px);width:104px;aspect-ratio:3/4;object-fit:cover;border-radius:18px;border:1px solid var(--ln);transform:scaleX(-1);background:var(--gl);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+#cv.au #lv{display:none}
+#cs{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 24px);transform:translateX(-50%);padding:8px 18px;border-radius:99px;font-size:14px;display:none}
+#cs.on{display:block}
+.ctl{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);display:flex;justify-content:center;gap:16px}
+.ctl .b{width:58px;height:58px;padding:0;border-radius:50%;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.ctl .e{background:var(--fg);color:var(--bg)}.b.off{opacity:.45}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i></div>
+<div id="ts" class="g"></div>
+<div id="md" class="mdl"><div class="g card"><h2 id="mt"></h2><p id="mp"></p><div class="row"><button class="b" id="mn"></button><button class="b p" id="my"></button></div></div></div>
+<div id="lb"><img alt=""></div>
+<div id="cv">
+<div id="avt"><div class="radar"><i></i><i></i><i></i><span class="av" id="cav"></span></div></div>
+<video id="rv" autoplay playsinline></video>
+<video id="lv" autoplay playsinline muted></video>
+<div id="cs" class="g"></div>
+<div class="ctl"><button class="b" id="cm"><i data-i="mic"></i></button><button class="b" id="cc"><i data-i="video"></i></button><button class="b e" id="ce"><i data-i="x"></i></button></div>
+</div>
+<main>
+<section id="hi" class="v g card on">
+<button class="b tg" title="Тема">◐</button>
+<h1>P2P</h1>
+<p>Чат, голосовые, фото и видеозвонки напрямую между устройствами. Ты увидишь, кто сейчас на сайте, и сможешь написать любому из них.</p>
+<input id="nm" placeholder="Твоё имя" maxlength="20" autocomplete="off">
+<button class="b p" id="go">Войти</button>
+</section>
+
+<section id="lobby" class="v g card">
+<button class="b tg" title="Тема">◐</button>
+<h2 class="big">Сейчас онлайн</h2>
+<div id="pl" class="pl"></div>
+<div id="em" class="em"><div class="radar"><i></i><i></i><i></i></div><p id="lt">Подключаемся…</p></div>
+</section>
+
+<section id="chat" class="v">
+<div class="hd g"><button class="b" id="bk"><i data-i="back"></i></button><span class="dot"></span><div><b id="pn"></b><small id="st">в сети</small></div><button class="b" id="ca"><i data-i="phone"></i></button><button class="b" id="cvb"><i data-i="video"></i></button></div>
+<div id="log"></div>
+<div id="ty"><s></s><s></s><s></s></div>
+<div class="bar g"><input type="file" id="fi" accept="image/*" multiple hidden><button class="b" id="fb"><i data-i="image"></i></button><input id="in" placeholder="Сообщение" autocomplete="off" enterkeyhint="send"><div id="rt"><span id="rtt">0:00</span></div><button class="b" id="cx"><i data-i="x"></i></button><button class="b p" id="sd"><i data-i="mic"></i></button></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s),
+IC={mic:'<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/>',
+video:'<path d="M23 7l-7 5 7 5z"/><rect x="1" y="5" width="15" height="14" rx="2"/>',
+phone:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+send:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',x:'<path d="M18 6L6 18M6 6l12 12"/>',back:'<path d="M15 18l-6-6 6-6"/>',
+play:'<path d="M7 4l13 8-13 8z" fill="currentColor"/>',pause:'<path d="M8 4v16M16 4v16"/>'},
+ic=(e,n)=>e.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+IC[n]+'</svg>',
+cfg={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}]};
+document.querySelectorAll('[data-i]').forEach(e=>ic(e,e.dataset.i));
+let myB=0,nick='',pc,dc,pol=0,making=0,busy=0,pend=0,target=0,gotA=0,dead=0,tyT,lastTy=0,peerName='',cst=0,lm=null,cur=null,mr=null,rt,chain=Promise.resolve();
+const nodes={},seen={},bar=$('.bar'),inp=$('#in'),sbtn=$('#sd');
+const show=id=>document.querySelectorAll('.v').forEach(v=>v.classList.toggle('on',v.id===id));
+const toast=t=>{const e=$('#ts');e.textContent=t;e.classList.add('on');clearTimeout(e.t);e.t=setTimeout(()=>e.classList.remove('on'),2600)};
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const cap=s=>{let n=0;return s.split('\r\n').filter(l=>!l.startsWith('a=candidate')||n++<6).join('\r\n')};
+const enc=d=>btoa(JSON.stringify({type:d.type,sdp:cap(d.sdp)})),dec=s=>JSON.parse(atob(s));
+const gather=()=>new Promise(r=>{const f=()=>pc.iceGatheringState==='complete'&&r();pc.onicegatheringstatechange=f;f();setTimeout(r,5000)});
+const sendJ=o=>dc&&dc.readyState==='open'&&dc.send(JSON.stringify(o));
+const hideM=()=>$('#md').classList.remove('on');
+function ask(t,p,yl,y,nl,n){$('#mt').textContent=t;$('#mp').textContent=p;const Y=$('#my'),N=$('#mn');
+Y.style.display=y?'':'none';Y.textContent=yl||'';N.style.display=nl?'':'none';N.textContent=nl||'';
+Y.onclick=()=>{hideM();y&&y()};N.onclick=()=>{hideM();n&&n()};$('#md').classList.add('on')}
+
+function reset(){if(dc)dc.onclose=null;if(pc)pc.onconnectionstatechange=null;try{dc&&dc.close();pc&&pc.close()}catch{}
+pc=dc=null;busy=0;pend=0;target=0;gotA=0;hideM();setPres(0)}
+function mk(){pc=new RTCPeerConnection(cfg);pc.onconnectionstatechange=()=>pc.connectionState==='failed'&&lost();
+pc.ondatachannel=e=>chan(e.channel);
+pc.ontrack=e=>{$('#rv').srcObject=e.streams[0]||new MediaStream([e.track]);$('#cs').classList.remove('on')}}
+function chan(c){dc=c;c.binaryType='arraybuffer';c.bufferedAmountLowThreshold=262144;
+c.onopen=()=>{hideM();setPres(1);$('#pn').textContent=peerName;show('chat');sys('Соединение установлено, канал зашифрован');
+pc.onnegotiationneeded=async()=>{try{making=1;await pc.setLocalDescription();sendJ({t:'sdp',d:pc.localDescription})}catch{}finally{making=0}}};
+c.onmessage=e=>recv(e.data);c.onclose=lost}
+function lost(){if($('#chat').classList.contains('on')){if(dead)return;dead=1;endCall(1);$('#chat').classList.add('off');$('#st').textContent='не в сети';sys('Собеседник вышел');bar.style.pointerEvents='none';bar.style.opacity=.4}
+else{toast('Не удалось соединиться');reset()}}
+
+function put(d){const l=$('#log');l.append(d);l.scrollTo({top:l.scrollHeight,behavior:'smooth'})}
+function sys(x){const d=document.createElement('div');d.className='m sy';d.textContent=x;put(d)}
+function bubble(n,mine,im,ts=Date.now()){const d=document.createElement('div'),t=document.createElement('time');d.className='m '+(mine?'me':'th')+(im?' im':'');t.textContent=new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});d.append(n,t);put(d)}
+function file(b,m,mine){const u=URL.createObjectURL(b),w=document.createElement('div');
+if(m.k==='i'){const i=new Image();i.src=u;i.onclick=()=>{$('#lb img').src=u;$('#lb').classList.add('on')};w.append(i)}
+else{const a=new Audio(u),bt=document.createElement('button'),pg=document.createElement('div'),pb=document.createElement('i'),tm=document.createElement('small');
+w.className='vm';bt.className='b';ic(bt,'play');pg.className='pg';pg.append(pb);tm.textContent=fmt(m.dur||0);
+bt.onclick=()=>a.paused?a.play().catch(()=>toast('Не удалось воспроизвести')):a.pause();
+a.onplay=()=>ic(bt,'pause');a.onpause=a.onended=()=>ic(bt,'play');
+a.ontimeupdate=()=>pb.style.width=Math.min(100,a.currentTime/(m.dur||a.duration||1)*100)+'%';w.append(bt,pg,tm)}
+bubble(w,mine,m.k==='i')}
+const out=(b,m)=>{file(b,m,1);chain=chain.then(async()=>{sendJ({t:'f',...m,size:b.size});const u=await b.arrayBuffer();
+for(let i=0;i<u.byteLength;i+=16384){if(dc.bufferedAmount>1e6)await new Promise(r=>dc.onbufferedamountlow=()=>{dc.onbufferedamountlow=null;r()});dc.send(u.slice(i,i+16384))}}).catch(()=>toast('Не удалось отправить'))};
+
+async function recv(x){
+if(typeof x!=='string'){if(!cur)return;cur.p.push(x);cur.g+=x.byteLength;if(cur.g>=cur.m.size){file(new Blob(cur.p,{type:cur.m.mime}),cur.m,0);cur=null}return}
+let d;try{d=JSON.parse(x)}catch{return}
+if(d.t==='m'){$('#ty').classList.remove('on');bubble(String(d.x).slice(0,4000),0,0,d.ts)}
+else if(d.t==='ty'){const y=$('#ty');y.classList.add('on');clearTimeout(tyT);tyT=setTimeout(()=>y.classList.remove('on'),2000)}
+else if(d.t==='f'){if(d.size>0&&d.size<2e7)cur={m:d,p:[],g:0}}
+else if(d.t==='sdp'){try{const o=d.d;if(!pol&&o.type==='offer'&&(making||pc.signalingState!=='stable'))return;
+await pc.setRemoteDescription(o);if(o.type==='offer'){await pc.setLocalDescription();sendJ({t:'sdp',d:pc.localDescription})}}catch{}}
+else if(d.t==='call'){if(cst)return sendJ({t:'end'});try{navigator.vibrate([200,100,200])}catch{}
+ask(peerName+' звонит',d.v?'Видеозвонок':'Аудиозвонок','Принять',async()=>{if(!await media(d.v))return sendJ({t:'end'});cst=1;showCall(d.v,'Соединяем…');sendJ({t:'acc'});addTr()},'Отклонить',()=>sendJ({t:'end'}))}
+else if(d.t==='acc'){addTr();$('#cs').textContent='Соединяем…'}
+else if(d.t==='end'){endCall(1);hideM()}}
+
+const media=async v=>{try{lm=await navigator.mediaDevices.getUserMedia({audio:true,video:v});$('#lv').srcObject=lm;return 1}catch{toast('Нет доступа к микрофону или камере');return 0}};
+const addTr=()=>lm&&lm.getTracks().forEach(t=>pc.addTrack(t,lm));
+function showCall(v,t){const c=$('#cv');c.classList.add('on');c.classList.toggle('au',!v);$('#cs').textContent=t;$('#cs').classList.add('on');$('#cav').textContent=[...peerName][0]||'?';$('#cc').style.display=v?'':'none'}
+async function startCall(v){if(cst||dead)return;if(!await media(v))return;cst=1;sendJ({t:'call',v});showCall(v,'Звоним…')}
+function endCall(remote){if(!cst)return;cst=0;if(!remote)sendJ({t:'end'});if(lm){lm.getTracks().forEach(t=>t.stop());lm=null}
+try{pc.getSenders().forEach(s=>pc.removeTrack(s))}catch{}$('#rv').srcObject=null;$('#lv').srcObject=null;$('#cv').classList.remove('on')}
+$('#ca').onclick=()=>startCall(0);$('#cvb').onclick=()=>startCall(1);$('#ce').onclick=()=>endCall();
+$('#cm').onclick=e=>{const t=lm&&lm.getAudioTracks()[0];if(t){t.enabled=!t.enabled;e.currentTarget.classList.toggle('off',!t.enabled)}};
+$('#cc').onclick=e=>{const t=lm&&lm.getVideoTracks()[0];if(t){t.enabled=!t.enabled;e.currentTarget.classList.toggle('off',!t.enabled)}};
+
+const sync=()=>ic(sbtn,(inp.value.trim()||mr)?'send':'mic');
+function sendT(){const x=inp.value.trim();if(!x)return;sendJ({t:'m',x,ts:Date.now()});bubble(x,1,0);inp.value='';sync()}
+inp.onkeydown=e=>e.key==='Enter'&&sendT();
+inp.oninput=()=>{sync();if(Date.now()-lastTy>1500){lastTy=Date.now();sendJ({t:'ty'})}};
+sbtn.onclick=()=>{if(mr)return mr.stop();if(inp.value.trim())return sendT();rec()};
+$('#cx').onclick=()=>{mr.cancel=1;mr.stop()};
+async function rec(){try{const st=await navigator.mediaDevices.getUserMedia({audio:true}),
+mt=['audio/webm;codecs=opus','audio/mp4','audio/webm'].find(x=>MediaRecorder.isTypeSupported(x)),ch=[],m=new MediaRecorder(st,mt?{mimeType:mt}:{}),t0=Date.now();mr=m;
+m.ondataavailable=e=>ch.push(e.data);
+m.onstop=()=>{st.getTracks().forEach(t=>t.stop());clearInterval(rt);bar.classList.remove('rec');mr=null;sync();
+if(!m.cancel&&Date.now()-t0>700)out(new Blob(ch,{type:m.mimeType}),{k:'v',mime:m.mimeType,dur:Math.round((Date.now()-t0)/1000)})};
+m.start();$('#rtt').textContent='0:00';bar.classList.add('rec');sync();rt=setInterval(()=>$('#rtt').textContent=fmt((Date.now()-t0)/1000),250)}
+catch{toast('Нет доступа к микрофону')}}
+$('#fb').onclick=()=>$('#fi').click();
+$('#fi').onchange=async e=>{for(const f of e.target.files){try{const bm=await createImageBitmap(f),s=Math.min(1,1280/Math.max(bm.width,bm.height)),c=document.createElement('canvas');
+c.width=bm.width*s;c.height=bm.height*s;c.getContext('2d').drawImage(bm,0,0,c.width,c.height);
+out(await new Promise(r=>c.toBlob(r,'image/jpeg',.82)),{k:'i',mime:'image/jpeg'})}catch{toast('Не удалось открыть фото')}}e.target.value=''};
+$('#lb').onclick=()=>$('#lb').classList.remove('on');
+$('#bk').onclick=()=>location.reload();
+
+/* Сигналы (кто онлайн и «хочет написать») идут через публичный MQTT-брокер.
+   Сам чат, голос, фото и видео идут напрямую по WebRTC. Своя комната: ?room=слово */
+const ROOM=(new URLSearchParams(location.search).get('room')||'lobby').replace(/[^\w-]/g,'').slice(0,32)||'lobby',
+T='p2p-chat/'+ROOM+'/',ID=Math.random().toString(36).slice(2,10),
+BR=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081'];
+let mq;const peers={};
+const pres=()=>mq&&mq.connected&&mq.publish(T+'p/'+ID,JSON.stringify({n:nick,b:myB}),{retain:true});
+const setPres=b=>{myB=b?1:0;pres()};
+const sig=(to,o)=>new Promise((ok,no)=>mq.publish(T+'s/'+to,JSON.stringify({...o,f:ID,n:nick}),e=>e?no(e):ok()));
+function net(){return new Promise((ok,fail)=>{
+const next=i=>{if(i>=BR.length)return fail();let d=0;
+const c=mqtt.connect(BR[i],{clientId:'p2p-'+ID,keepalive:30,connectTimeout:7000,reconnectPeriod:3000,will:{topic:T+'p/'+ID,payload:'',retain:true,qos:0}});
+const bad=()=>{if(d)return;d=1;c.end(true);next(i+1)};
+c.on('connect',()=>{if(!d){d=1;mq=c}if(mq!==c)return;c.subscribe([T+'p/+',T+'s/'+ID]);pres();ok()});
+c.on('error',bad);c.on('close',bad);
+c.on('message',(t,m)=>{const x=m.toString();
+if(t.startsWith(T+'p/')){const id=t.slice(T.length+2);if(id===ID)return;
+if(!x)delete peers[id];else try{const v=JSON.parse(x);if(v.n)peers[id]={n:String(v.n).slice(0,20),b:v.b,at:Date.now()}}catch{}
+render()}else try{onSig(JSON.parse(x))}catch{}})};
+next(0)})}
+
+function onSig(d){
+if(d.k==='o'){if(busy||pend)return sig(d.f,{k:'no',r:'busy'}).catch(()=>{});
+const q={f:d.f,s:d.s};pend=q;peerName=String(d.n||'Кто-то').slice(0,20);try{navigator.vibrate(120)}catch{}
+ask(peerName+' хочет написать вам','Вы точно хотите открыть с этим человеком чат?','Принять',()=>accept(q),'Отклонить',()=>decline(q))}
+else if(d.k==='x'){if(pend&&pend.f===d.f){hideM();pend=0}}
+else if(d.k==='a'&&d.f===target&&!gotA){gotA=1;pc.setRemoteDescription(dec(d.s)).catch(()=>{toast('Не удалось соединиться');reset()})}
+else if(d.k==='no'&&d.f===target){toast(peerName+(d.r==='busy'?' сейчас занят':' отклонил приглашение'));reset()}}
+
+async function connect(id,nm){if(busy)return;busy=1;pol=0;peerName=nm;mk();chan(pc.createDataChannel('c'));
+ask('Ждём ответа…',nm,0,0,'Отмена',()=>{sig(id,{k:'x'}).catch(()=>{});reset()});
+try{await pc.setLocalDescription(await pc.createOffer());await gather();target=id;await sig(id,{k:'o',s:enc(pc.localDescription)});setPres(1);
+setTimeout(()=>{if(busy&&!$('#chat').classList.contains('on')){toast('Нет ответа');reset()}},45000)}catch{toast('Не удалось отправить приглашение');reset()}}
+async function accept(q){busy=1;pend=0;pol=1;mk();
+try{await pc.setRemoteDescription(dec(q.s));await pc.setLocalDescription(await pc.createAnswer());await gather();
+await sig(q.f,{k:'a',s:enc(pc.localDescription)});setPres(1);ask('Соединяем…',peerName,0,0,'Отмена',reset);
+setTimeout(()=>{if(busy&&!$('#chat').classList.contains('on')){toast('Не удалось соединиться');reset()}},45000)}catch{toast('Не удалось соединиться');reset()}}
+function decline(q){pend=0;sig(q.f,{k:'no'}).catch(()=>{})}
+
+function render(){const now=Date.now();for(const k in peers)if(now-peers[k].at>80000)delete peers[k];
+const L=Object.keys(peers);for(const k in nodes)if(!peers[k]){nodes[k].remove();delete nodes[k]}
+L.forEach(k=>{const p=peers[k];let n=nodes[k];if(!n){n=nodes[k]=document.createElement('div');n.className='pc';n.innerHTML='<span class="av"></span><div><b></b><small></small></div>';$('#pl').append(n)}
+n.querySelector('.av').textContent=([...p.n][0]||'?').toUpperCase();n.querySelector('b').textContent=p.n;
+n.querySelector('small').textContent=p.b?'занят':'онлайн';n.classList.toggle('bz',!!p.b);n.onclick=()=>connect(k,p.n)});
+$('#em').style.display=L.length?'none':'flex'}
+
+try{$('#nm').value=localStorage.n||''}catch{}
+$('#go').onclick=async()=>{nick=$('#nm').value.trim().slice(0,20);if(!nick)return toast('Введи имя');try{localStorage.n=nick}catch{}
+show('lobby');
+try{await net()}catch{return $('#lt').textContent='Не удалось подключиться к серверу сигналов. Проверь интернет или VPN и обнови страницу.'}
+$('#lt').textContent='Пока никого нет. Когда кто-то откроет эту страницу, он появится здесь.';
+setInterval(render,15000);setInterval(pres,25000);
+addEventListener('pagehide',()=>{try{mq.publish(T+'p/'+ID,'',{retain:true})}catch{}})};
+document.querySelectorAll('.tg').forEach(b=>b.onclick=()=>{const r=document.documentElement,
+dark=r.dataset.theme?r.dataset.theme==='dark':!matchMedia('(prefers-color-scheme:light)').matches;r.dataset.theme=dark?'light':'dark'});
+</script>
+</body>
+</html>
